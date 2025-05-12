@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace laba6_charp_last
 {
-    public partial class Form1: Form
+    public partial class Form1 : Form
     {
         List<Emitter> emitters = new List<Emitter>();
         GunEmitter gun;
@@ -20,6 +20,7 @@ namespace laba6_charp_last
         public Form1()
         {
             InitializeComponent();
+            picDisplay.MouseMove += picDisplay_MouseMove;
             picDisplay.Image = new Bitmap(picDisplay.Width, picDisplay.Height);
 
             // Инициализация пушки
@@ -27,8 +28,8 @@ namespace laba6_charp_last
             {
                 Direction = 90,
                 Spreading = 5,
-                SpeedMin = 15,
-                SpeedMax = 20,
+                SpeedMin = 10,
+                SpeedMax = 15,
                 ColorFrom = Color.Yellow,
                 ColorTo = Color.FromArgb(0, Color.Orange),
                 ParticlesPerTick = 1,
@@ -41,22 +42,63 @@ namespace laba6_charp_last
             topEmitter = new TopEmitter
             {
                 Width = picDisplay.Width,
-                ParticlesPerTick = 2,
-                ParticlesCount = 50,
+                ParticlesPerTick = 1,
+                ParticlesCount =2, 
                 ColorFrom = Color.LightBlue,
                 ColorTo = Color.FromArgb(0, Color.Blue),
                 SpeedMin = 1,
-                SpeedMax = 3,
+                SpeedMax =3,
                 RadiusMin = 10,
                 RadiusMax = 20,
                 LifeMin = 500,
-                LifeMax = 1000
+                LifeMax = 1000,
+                HitsToDestroyMin = 3,  // Новые параметры
+                HitsToDestroyMax = 6
             };
 
             emitters.Add(gun);
             emitters.Add(topEmitter);
 
             topEmitter.GravitationY = 0.5f;
+
+            // Настройка TrackBar
+            trackBarSpeed.Minimum = 1;
+            trackBarSpeed.Maximum = 10;
+            trackBarSpeed.Value = 3;
+            trackBarSpeed.ValueChanged += TrackBarSpeed_ValueChanged;
+
+            trackBarCount.Minimum = 1;
+            trackBarCount.Maximum = 10;
+            trackBarCount.Value = 2;
+            trackBarCount.ValueChanged += TrackBarCount_ValueChanged;
+
+            trackBarHits.Minimum = 1;
+            trackBarHits.Maximum = 10;
+            trackBarHits.Value = 3;
+            trackBarHits.ValueChanged += TrackBarHits_ValueChanged;
+        }
+
+        private void TrackBarSpeed_ValueChanged(object sender, EventArgs e)
+        {
+            topEmitter.SpeedMin = trackBarSpeed.Value;
+            topEmitter.SpeedMax = trackBarSpeed.Value + 2;
+
+            labelSpeed.Text = $"Скорость: {trackBarSpeed.Value}";
+        }
+
+        private void TrackBarCount_ValueChanged(object sender, EventArgs e)
+        {
+            topEmitter.ParticlesPerTick = trackBarCount.Value;
+
+            labelCount.Text = $"Частиц/тик: {trackBarCount.Value}";
+        }
+
+        private void TrackBarHits_ValueChanged(object sender, EventArgs e)
+        {
+            topEmitter.HitsToDestroyMin = trackBarHits.Value;
+            topEmitter.HitsToDestroyMax = trackBarHits.Value + 3;
+
+            labelHits.Text = $"Ударов для уничтожения: {trackBarHits.Value}";
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -66,14 +108,9 @@ namespace laba6_charp_last
             using (var g = Graphics.FromImage(picDisplay.Image))
             {
                 g.Clear(Color.Black);
-
-                // Рисуем землю
                 g.FillRectangle(Brushes.DarkGreen, 0, picDisplay.Height - 20, picDisplay.Width, 20);
-
-                // Рисуем счет
                 lblScore.Text = $"Очки: {score}";
 
-                // Рисуем все эмиттеры
                 foreach (var emitter in emitters)
                 {
                     emitter.Render(g);
@@ -90,7 +127,6 @@ namespace laba6_charp_last
                 emitter.UpdateState();
             }
 
-            // Проверка столкновений
             foreach (var bullet in gun.particles)
             {
                 if (bullet.Life <= 0) continue;
@@ -120,7 +156,6 @@ namespace laba6_charp_last
                 }
             }
 
-            // Удаление упавших мишеней
             foreach (var target in topEmitter.particles)
             {
                 if (target.Y + target.Radius > picDisplay.Height - 20)
@@ -132,19 +167,26 @@ namespace laba6_charp_last
 
         private void picDisplay_MouseMove(object sender, MouseEventArgs e)
         {
+            //1.Обновляем позицию пушки(только по горизонтали)
             gun.X = e.X;
-            gun.Y = e.Y;
 
-            if (e.Y < picDisplay.Height - 50)
+            // 2. Рассчитываем направление стрельбы
+            float dx = e.X - (gun.X); // Разница по X
+            float dy = e.Y - (gun.Y - 30); // Разница по Y (с учётом высоты пушки)
+
+            // 3. Нормализуем вектор направления
+            float length = (float)Math.Sqrt(dx * dx + dy * dy);
+            if (length > 0)
             {
-                float dx = e.X - gun.X;
-                float dy = (picDisplay.Height - 50) - e.Y;
-                gun.Direction = (int)(Math.Atan2(dy, dx) * 180 / Math.PI); // Явное приведение к int
+                dx /= length;
+                dy /= length;
             }
-            else
-            {
-                gun.Direction = 90;
-            }
+
+            // 4. Задаём направление (в градусах, где 0 - вправо, 90 - вверх)
+            gun.Direction = (float)(Math.Atan2(-dy, dx) * 180 / Math.PI);
+
+            // 5. Принудительно обновляем отрисовку
+            picDisplay.Invalidate();
         }
 
         private void btnStart_Click(object sender, EventArgs e)

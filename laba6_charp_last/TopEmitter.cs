@@ -16,16 +16,18 @@ namespace laba6_charp_last
         public int RadiusMax = 20;
         public int LifeMin = 100;
         public int LifeMax = 200;
-        public Color ColorFrom = Color.White; // Исправлено именование
-        public Color ColorTo = Color.FromArgb(0, Color.Black); // Исправлено именование
+        public Color ColorFrom = Color.White;
+        public Color ColorTo = Color.FromArgb(0, Color.Black);
+        public int HitsToDestroyMin = 3;  // Новые параметры
+        public int HitsToDestroyMax = 6;
 
         public override Particle CreateParticle()
         {
             var particle = new TargetParticle
             {
-                FromColor = ColorFrom, // Исправлено
-                ToColor = ColorTo,     // Исправлено
-                HitsToDestroy = Particle.rand.Next(2, 5)
+                FromColor = ColorFrom,
+                ToColor = ColorTo,
+                HitsToDestroy = Particle.rand.Next(HitsToDestroyMin, HitsToDestroyMax)
             };
             return particle;
         }
@@ -44,7 +46,7 @@ namespace laba6_charp_last
             if (particle is TargetParticle target)
             {
                 target.HitCount = 0;
-                target.HitsToDestroy = Particle.rand.Next(2, 5);
+                target.HitsToDestroy = Particle.rand.Next(HitsToDestroyMin, HitsToDestroyMax);
             }
         }
     }

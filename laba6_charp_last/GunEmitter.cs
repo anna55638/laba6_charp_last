@@ -11,11 +11,10 @@ namespace laba6_charp_last
     {
         public float X;
         public float Y;
-
-        public float Direction = 0;
+        public float Direction = 0;  // Изменено на float
         public int Spreading = 10;
-        public int SpeedMin = 1;
-        public int SpeedMax = 10;
+        public int SpeedMin = 15;
+        public int SpeedMax = 20;
         public int RadiusMin = 2;
         public int RadiusMax = 5;
         public Color ColorFrom = Color.White;
@@ -36,13 +35,14 @@ namespace laba6_charp_last
         {
             particle.Life = 50;
             particle.X = X;
-            particle.Y = Y;
+            particle.Y = Y - 15; // Корректируем точку вылета
 
-            var direction = Direction + (double)Particle.rand.Next(Spreading) - Spreading / 2;
-            var speed = Particle.rand.Next(SpeedMin, SpeedMax);
+            // Правильный расчёт направления
+            double angle = (Direction + Particle.rand.Next(Spreading) - Spreading / 2) * Math.PI / 180;
+            float speed = Particle.rand.Next(SpeedMin, SpeedMax);
 
-            particle.SpeedX = (float)(Math.Cos(direction / 180 * Math.PI) * speed);
-            particle.SpeedY = -(float)(Math.Sin(direction / 180 * Math.PI) * speed);
+            particle.SpeedX = (float)(Math.Cos(angle) * speed);
+            particle.SpeedY = -(float)(Math.Sin(angle) * speed); // Отрицательное значение, т.к. Y растёт вниз
 
             particle.Radius = Particle.rand.Next(RadiusMin, RadiusMax);
         }
