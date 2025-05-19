@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Emitter.cs" />
+    <Compile Include="ExplosionEmitter.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -54,6 +55,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GunEmitter.cs" />
+    <Compile Include="MeteorParticle.cs" />
     <Compile Include="Particle.cs" />
     <Compile Include="ParticleColorful.cs" />
     <Compile Include="Program.cs" />
@@ -92,10 +94,10 @@
     <Content Include="Resources\cosmo2.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\cosmo556.jpg">
+    <Content Include="Resources\fon2.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\fon2.jpg">
+    <Content Include="Resources\meteor.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\raketa.png">

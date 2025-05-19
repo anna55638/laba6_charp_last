@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,45 +13,27 @@ namespace laba6_charp_last
 {
     public partial class Form1 : Form
     {
-        //private Image backgroundImage;
         private Bitmap highQualityBackground;
-        private Image rocketImage;
-
-        List<Emitter> emitters = new List<Emitter>();
-        GunEmitter gun;
-        TopEmitter topEmitter;
-        int score = 0;
+        private List<Emitter> emitters = new List<Emitter>();
+        private GunEmitter gun;
+        private TopEmitter topEmitter;
+        private ExplosionEmitter explosionEmitter;
+        private int score = 0;
+        private int lives = 5;
+        private int rocketsDestroyed = 0;
+        private const int WIN_CONDITION = 20;
+        private DateTime lastMeteorTime = DateTime.MinValue;
+        private List<Bitmap> lifeIcons = new List<Bitmap>();
 
         public Form1()
         {
             InitializeComponent();
 
-            // Загрузка фона с высоким качеством
-            try
-            {
-                var originalBg = Image.FromFile("Resources/fon2.jpg");
-                highQualityBackground = new Bitmap(originalBg, picDisplay.Width, picDisplay.Height);
-                originalBg.Dispose();
+            // Инициализация иконок жизней
+            InitializeLifeIcons();
 
-                // Настройка PictureBox для качественного отображения
-                picDisplay.SizeMode = PictureBoxSizeMode.Normal;
-                picDisplay.BackColor = Color.Transparent;
-                picDisplay.Image = new Bitmap(picDisplay.Width, picDisplay.Height);
-
-                // Установка параметров качества графики
-                SetStyle(ControlStyles.OptimizedDoubleBuffer |
-                        ControlStyles.AllPaintingInWmPaint |
-                        ControlStyles.UserPaint, true);
-            }
-            catch
-            {
-                // Резервный вариант
-                highQualityBackground = new Bitmap(picDisplay.Width, picDisplay.Height);
-                using (var g = Graphics.FromImage(highQualityBackground))
-                {
-                    g.Clear(Color.DarkBlue);
-                }
-            }
+            // Загрузка фона
+            InitializeBackground();
 
             // Настройка PictureBox
             picDisplay.Image = new Bitmap(picDisplay.Width, picDisplay.Height);
@@ -61,62 +44,114 @@ namespace laba6_charp_last
             {
                 Direction = 90,
                 Spreading = 5,
-                SpeedMin = 15,  // Увеличиваем скорость пуль
+                SpeedMin = 15,
                 SpeedMax = 20,
                 ColorFrom = Color.Yellow,
-                ColorTo = Color.FromArgb(0, Color.Orange),
+                //ColorTo = Color.FromArgb(0, Color.Orange),
                 FireRate = 3,
-                ParticlesCount = 200, // Больше частиц в пуле
+                ParticlesCount = 200,
                 X = picDisplay.Width / 2,
                 Y = picDisplay.Height - 30,
             };
 
-            // Инициализация эмиттера ракет с уменьшенной скоростью
+            // Инициализация эмиттера ракет
             topEmitter = new TopEmitter
             {
                 Width = picDisplay.Width,
                 ParticlesPerTick = 1,
-                ParticlesCount = 5, // Меньше ракет одновременно
+                ParticlesCount = 5,
                 ColorFrom = Color.LightBlue,
                 ColorTo = Color.FromArgb(0, Color.Blue),
-                SpeedMin = 1,     // Медленная постоянная скорость
+                SpeedMin = 1,
                 SpeedMax = 2,
-                RadiusMin = 15,    // Увеличиваем размер ракет
+                RadiusMin = 15,
                 RadiusMax = 25,
-                LifeMin = 300,     // Уменьшаем время жизни
+                LifeMin = 300,
                 LifeMax = 500,
-                HitsToDestroyMin = 2, // Легче уничтожить
+                HitsToDestroyMin = 2,
                 HitsToDestroyMax = 5,
-                GravitationY = 0   // Нет гравитации
+                GravitationY = 0
             };
+
+            // Инициализация эмиттера взрывов
+            explosionEmitter = new ExplosionEmitter();
 
             emitters.Add(gun);
             emitters.Add(topEmitter);
+            emitters.Add(explosionEmitter);
 
-            //topEmitter.GravitationY = 0.5f;
+            // Настройка TrackBar'ов
+            InitializeTrackBars();
+        }
 
-            // Настройка TrackBar
+        private void InitializeLifeIcons()
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                var bmp = new Bitmap(30, 30);
+                using (var g = Graphics.FromImage(bmp))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.FillEllipse(Brushes.Red, 0, 0, 30, 30);
+                    g.DrawEllipse(new Pen(Color.DarkRed, 2), 0, 0, 30, 30);
+                }
+                lifeIcons.Add(bmp);
+            }
+        }
+
+        private void InitializeBackground()
+        {
+            try
+            {
+                var originalBg = Image.FromFile("Resources/fon2.jpg");
+                highQualityBackground = new Bitmap(originalBg, picDisplay.Width, picDisplay.Height);
+                originalBg.Dispose();
+            }
+            catch
+            {
+                highQualityBackground = new Bitmap(picDisplay.Width, picDisplay.Height);
+                using (var g = Graphics.FromImage(highQualityBackground))
+                {
+                    g.Clear(Color.DarkBlue);
+                    using (var brush = new LinearGradientBrush(
+                        new Point(0, 0),
+                        new Point(picDisplay.Width, picDisplay.Height),
+                        Color.DarkBlue,
+                        Color.Black))
+                    {
+                        g.FillRectangle(brush, 0, 0, picDisplay.Width, picDisplay.Height);
+                    }
+
+                    // Рисуем звезды
+                    var rnd = new Random();
+                    for (int i = 0; i < 200; i++)
+                    {
+                        int size = rnd.Next(1, 3);
+                        g.FillEllipse(Brushes.White,
+                            rnd.Next(picDisplay.Width),
+                            rnd.Next(picDisplay.Height),
+                            size, size);
+                    }
+                }
+            }
+        }
+
+        private void InitializeTrackBars()
+        {
             trackBarSpeed.Minimum = 1;
             trackBarSpeed.Maximum = 10;
             trackBarSpeed.Value = 3;
             trackBarSpeed.ValueChanged += TrackBarSpeed_ValueChanged;
-
-            /*trackBarCount.Minimum = 1;
-            trackBarCount.Maximum = 10;
-            trackBarCount.Value = 2;
-            trackBarCount.ValueChanged += TrackBarCount_ValueChanged;*/
 
             trackBarHits.Minimum = 1;
             trackBarHits.Maximum = 10;
             trackBarHits.Value = 3;
             trackBarHits.ValueChanged += TrackBarHits_ValueChanged;
 
-            // Добавляем TrackBar для скоростистрельности
             trackBarFireRate.Minimum = 1;
             trackBarFireRate.Maximum = 10;
             trackBarFireRate.Value = 3;
             trackBarFireRate.ValueChanged += TrackBarFireRate_ValueChanged;
-            
         }
 
         private void TrackBarFireRate_ValueChanged(object sender, EventArgs e)
@@ -129,50 +164,190 @@ namespace laba6_charp_last
         {
             topEmitter.SpeedMin = trackBarSpeed.Value;
             topEmitter.SpeedMax = trackBarSpeed.Value + 2;
-
             labelSpeed.Text = $"Скорость: {trackBarSpeed.Value}";
-        }
-
-        private void TrackBarCount_ValueChanged(object sender, EventArgs e)
-        {
-            /*topEmitter.ParticlesPerTick = trackBarFireRate.Value;
-
-            labelFireRate.Text = $"Частиц/тик: {trackBarFireRate.Value}";*/
         }
 
         private void TrackBarHits_ValueChanged(object sender, EventArgs e)
         {
             topEmitter.HitsToDestroyMin = trackBarHits.Value;
             topEmitter.HitsToDestroyMax = trackBarHits.Value + 3;
-
             labelHits.Text = $"Ударов для уничтожения: {trackBarHits.Value}";
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            UpdateState();
+            if (CheckGameOver()) return;
 
+            SpawnMeteorIfNeeded();
+            UpdateGameState();
+            RenderGame();
+        }
+
+        private bool CheckGameOver()
+        {
+            if (lives <= 0)
+            {
+                timer1.Enabled = false;
+                MessageBox.Show("Игра окончена! Вы проиграли.", "Результат");
+                btnStart.Enabled = true;
+                return true;
+            }
+
+            if (rocketsDestroyed >= WIN_CONDITION)
+            {
+                timer1.Enabled = false;
+                MessageBox.Show($"Поздравляем! Вы выиграли с счетом {score}!", "Результат");
+                btnStart.Enabled = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private void SpawnMeteorIfNeeded()
+        {
+            if ((DateTime.Now - lastMeteorTime).TotalSeconds >= 15)
+            {
+                lastMeteorTime = DateTime.Now;
+                CreateMeteor();
+            }
+        }
+
+        private void CreateMeteor()
+        {
+            var meteor = new MeteorParticle
+            {
+                FromColor = Color.White,
+                ToColor = Color.FromArgb(0, Color.DarkGray),
+                X = Particle.rand.Next(picDisplay.Width),
+                Y = -50,
+                SpeedX = (float)(Particle.rand.NextDouble() - 0.5) * 2f,
+                SpeedY = Particle.rand.Next(1, 3) * 0.5f,
+                Life = 1000,
+                HitsToDestroy = 5 + Particle.rand.Next(6),
+                HitCount = 0
+            };
+
+            topEmitter.particles.Add(meteor);
+        }
+
+        private void UpdateGameState()
+        {
+            // Измененный вызов для GunEmitter
+            ((GunEmitter)gun).UpdateState();
+            topEmitter.UpdateState();
+
+            CheckBulletCollisions();
+            CheckRocketLandings();
+            explosionEmitter.UpdateState();
+        }
+
+        private void CheckBulletCollisions()
+        {
+            foreach (var bullet in gun.particles)
+            {
+                if (bullet.Life <= 0) continue;
+
+                CheckRocketCollisions(bullet);
+                CheckMeteorCollisions(bullet);
+            }
+        }
+
+        private void CheckRocketCollisions(Particle bullet)
+        {
+            foreach (var target in topEmitter.particles.OfType<TargetParticle>())
+            {
+                if (target.Life <= 0 || target is MeteorParticle) continue;
+
+                if (CheckCollision(bullet, target))
+                {
+                    target.HitCount++;
+                    score += 10;
+
+                    if (target.HitCount >= target.HitsToDestroy)
+                    {
+                        target.Life = 0;
+                        rocketsDestroyed++;
+                        explosionEmitter.CreateExplosion(target.X, target.Y, Color.LightBlue);
+                        score += 50;
+                    }
+
+                    bullet.Life -= 20;
+                    if (bullet.Life <= 0) break;
+                }
+            }
+        }
+
+        private void CheckMeteorCollisions(Particle bullet)
+        {
+            foreach (var target in topEmitter.particles.OfType<MeteorParticle>())
+            {
+                if (target.Life <= 0 || target.IsDestroyed) continue;
+
+                if (CheckCollision(bullet, target))
+                {
+                    target.HitCount++;
+                    score += 20;
+
+                    if (target.HitCount >= target.HitsToDestroy)
+                    {
+                        target.Life = 0;
+                        target.IsDestroyed = true;
+                        score += 100;
+                        ((GunEmitter)gun).ActivateUpgrade();
+                        explosionEmitter.CreateExplosion(target.X, target.Y, Color.Orange);
+                    }
+
+                    bullet.Life -= 20;
+                    if (bullet.Life <= 0) break;
+                }
+            }
+        }
+
+
+        private bool CheckCollision(Particle a, Particle b)
+        {
+            float dx = a.X - b.X;
+            float dy = a.Y - b.Y;
+            float minDistance = a.Radius + b.Radius;
+            return dx * dx + dy * dy < minDistance * minDistance;
+        }
+
+        private void CheckRocketLandings()
+        {
+            foreach (var particle in topEmitter.particles.ToList())
+            {
+                if (particle.Y >= picDisplay.Height - 30 && particle.Life > 0)
+                {
+                    HandleParticleLanding(particle);
+                }
+            }
+        }
+
+        private void HandleParticleLanding(Particle particle)
+        {
+            if (particle is TargetParticle && !(particle is MeteorParticle))
+            {
+                lives--;
+                explosionEmitter.CreateExplosion(particle.X, picDisplay.Height - 30, Color.Red);
+            }
+            else if (particle is MeteorParticle meteor && !meteor.IsDestroyed)
+            {
+                explosionEmitter.CreateExplosion(meteor.X, picDisplay.Height - 30, Color.DarkOrange);
+            }
+            particle.Life = 0;
+        }
+
+        private void RenderGame()
+        {
             using (var g = Graphics.FromImage(picDisplay.Image))
             {
-                // Очистка с прозрачным фоном
                 g.Clear(Color.Transparent);
-
-                // Рисуем фон с высоким качеством
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-
-                g.DrawImage(highQualityBackground,
-                           new Rectangle(0, 0, picDisplay.Width, picDisplay.Height),
-                           new Rectangle(0, 0, highQualityBackground.Width, highQualityBackground.Height),
-                           GraphicsUnit.Pixel);
-                // Рисуем землю
-                g.FillRectangle(new SolidBrush(Color.FromArgb(150, Color.DarkGreen)),
-                    0, picDisplay.Height - 20, picDisplay.Width, 20);
-
-                lblScore.Text = $"Очки: {score}";
-
+                DrawBackground(g);
+                DrawGround(g);
+                DrawScore(g);
+                DrawLives(g);
+                DrawRocketCounter(g);
                 gun.DrawGun(g);
 
                 foreach (var emitter in emitters)
@@ -184,55 +359,51 @@ namespace laba6_charp_last
             picDisplay.Invalidate();
         }
 
-        private void UpdateState()
+        private void DrawBackground(Graphics g)
         {
-            // Обновляем только пули (ракеты обновляются в своем темпе)
-            gun.UpdateState();
-            topEmitter.UpdateState();
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.HighQuality;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
 
-            foreach (var bullet in gun.particles)
+            g.DrawImage(highQualityBackground,
+                       new Rectangle(0, 0, picDisplay.Width, picDisplay.Height),
+                       new Rectangle(0, 0, highQualityBackground.Width, highQualityBackground.Height),
+                       GraphicsUnit.Pixel);
+        }
+
+        private void DrawGround(Graphics g)
+        {
+            g.FillRectangle(new SolidBrush(Color.FromArgb(150, Color.DarkGreen)),
+                0, picDisplay.Height - 20, picDisplay.Width, 20);
+        }
+
+        private void DrawScore(Graphics g)
+        {
+            lblScore.Text = $"Очки: {score}";
+        }
+
+        private void DrawLives(Graphics g)
+        {
+            for (int i = 0; i < lives; i++)
             {
-                if (bullet.Life <= 0) continue;
-
-                foreach (var target in topEmitter.particles.OfType<TargetParticle>())
-                {
-                    if (target.Life <= 0) continue;
-
-                    // Более точное определение столкновения
-                    float dx = bullet.X - target.X;
-                    float dy = bullet.Y - target.Y;
-                    float minDistance = bullet.Radius + target.Radius;
-
-                    if (dx * dx + dy * dy < minDistance * minDistance)
-                    {
-                        target.HitCount++;
-                        score += 10;
-
-                        // Пуля наносит больше урона
-                        if (target.HitCount >= target.HitsToDestroy)
-                        {
-                            target.Life = 0;
-                            score += 50;
-                        }
-
-                        // Пуля не исчезает сразу после попадания
-                        bullet.Life -= 20; // Теряет часть жизни
-                        if (bullet.Life <= 0) break;
-                    }
-                }
+                g.DrawImage(lifeIcons[i], picDisplay.Width - 40 - i * 35, 10);
             }
+        }
+
+        private void DrawRocketCounter(Graphics g)
+        {
+            g.DrawString($"Ракет: {rocketsDestroyed}/{WIN_CONDITION}",
+                new Font("Arial", 12), Brushes.White, 10, 10);
         }
 
         private void picDisplay_MouseMove(object sender, MouseEventArgs e)
         {
-            //1.Обновляем позицию пушки(только по горизонтали)
             gun.X = e.X;
 
-            // 2. Рассчитываем направление стрельбы
-            float dx = e.X - (gun.X); // Разница по X
-            float dy = e.Y - (gun.Y - 30); // Разница по Y (с учётом высоты пушки)
+            float dx = e.X - (gun.X);
+            float dy = e.Y - (gun.Y - 30);
 
-            // 3. Нормализуем вектор направления
             float length = (float)Math.Sqrt(dx * dx + dy * dy);
             if (length > 0)
             {
@@ -240,22 +411,34 @@ namespace laba6_charp_last
                 dy /= length;
             }
 
-            // 4. Задаём направление (в градусах, где 0 - вправо, 90 - вверх)
             gun.Direction = (float)(Math.Atan2(-dy, dx) * 180 / Math.PI);
-
-            // 5. Принудительно обновляем отрисовку
             picDisplay.Invalidate();
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            StartNewGame();
+        }
+
+        private void StartNewGame()
+        {
             timer1.Enabled = true;
             btnStart.Enabled = false;
             score = 0;
+            lives = 5;
+            rocketsDestroyed = 0;
+            lastMeteorTime = DateTime.Now;
             lblScore.Text = "Очки: 0";
 
             gun.particles.Clear();
             topEmitter.particles.Clear();
+            explosionEmitter.particles.Clear();
+            ((GunEmitter)gun).IsUpgraded = false;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            lblScore.Text = "Очки: 0";
         }
     }
 }

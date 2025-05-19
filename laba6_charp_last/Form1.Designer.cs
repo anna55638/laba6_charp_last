@@ -49,13 +49,13 @@
             // 
             this.picDisplay.Location = new System.Drawing.Point(2, 1);
             this.picDisplay.Name = "picDisplay";
-            this.picDisplay.Size = new System.Drawing.Size(828, 511);
+            this.picDisplay.Size = new System.Drawing.Size(838, 600);
             this.picDisplay.TabIndex = 0;
             this.picDisplay.TabStop = false;
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(678, 572);
+            this.btnStart.Location = new System.Drawing.Point(718, 642);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(112, 33);
             this.btnStart.TabIndex = 1;
@@ -65,7 +65,7 @@
             // lblScore
             // 
             this.lblScore.AutoSize = true;
-            this.lblScore.Location = new System.Drawing.Point(719, 549);
+            this.lblScore.Location = new System.Drawing.Point(732, 619);
             this.lblScore.Name = "lblScore";
             this.lblScore.Size = new System.Drawing.Size(53, 16);
             this.lblScore.TabIndex = 2;
@@ -79,21 +79,21 @@
             // 
             // trackBarSpeed
             // 
-            this.trackBarSpeed.Location = new System.Drawing.Point(22, 549);
+            this.trackBarSpeed.Location = new System.Drawing.Point(12, 619);
             this.trackBarSpeed.Name = "trackBarSpeed";
             this.trackBarSpeed.Size = new System.Drawing.Size(128, 56);
             this.trackBarSpeed.TabIndex = 3;
             // 
             // trackBarFireRate
             // 
-            this.trackBarFireRate.Location = new System.Drawing.Point(204, 549);
+            this.trackBarFireRate.Location = new System.Drawing.Point(192, 619);
             this.trackBarFireRate.Name = "trackBarFireRate";
             this.trackBarFireRate.Size = new System.Drawing.Size(131, 56);
             this.trackBarFireRate.TabIndex = 4;
             // 
             // trackBarHits
             // 
-            this.trackBarHits.Location = new System.Drawing.Point(398, 549);
+            this.trackBarHits.Location = new System.Drawing.Point(382, 619);
             this.trackBarHits.Name = "trackBarHits";
             this.trackBarHits.Size = new System.Drawing.Size(137, 56);
             this.trackBarHits.TabIndex = 5;
@@ -126,7 +126,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(852, 617);
+            this.ClientSize = new System.Drawing.Size(852, 687);
             this.Controls.Add(this.labelFireRate);
             this.Controls.Add(this.labelSpeed);
             this.Controls.Add(this.labelHits);
