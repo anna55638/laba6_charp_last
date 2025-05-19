@@ -11,37 +11,40 @@ namespace laba6_charp_last
     {
         public int Width;
         public int SpeedMin = 1;
-        public int SpeedMax = 3;
+        public int SpeedMax = 2;
         public int RadiusMin = 10;
         public int RadiusMax = 20;
-        public int LifeMin = 100;
-        public int LifeMax = 200;
+        public int LifeMin = 700;
+        public int LifeMax = 900;
         public Color ColorFrom = Color.White;
         public Color ColorTo = Color.FromArgb(0, Color.Black);
         public int HitsToDestroyMin = 3;  // Новые параметры
         public int HitsToDestroyMax = 6;
+        //public float GravitationY = 0.5f;
 
         public override Particle CreateParticle()
         {
-            var particle = new TargetParticle
+            return new TargetParticle
             {
                 FromColor = ColorFrom,
                 ToColor = ColorTo,
-                HitsToDestroy = Particle.rand.Next(HitsToDestroyMin, HitsToDestroyMax)
+                HitsToDestroy = Particle.rand.Next(HitsToDestroyMin, HitsToDestroyMax),
+                SpeedY = Particle.rand.Next(SpeedMin, SpeedMax) * 0.2f // Медленное движение
             };
-            return particle;
         }
 
         public override void ResetParticle(Particle particle)
         {
             particle.Life = Particle.rand.Next(LifeMin, LifeMax);
             particle.X = Particle.rand.Next(Width);
-            particle.Y = -20;
+            particle.Y = -TargetParticle.RocketImage.Height;
 
-            particle.SpeedX = Particle.rand.Next(-2, 2);
-            particle.SpeedY = Particle.rand.Next(SpeedMin, SpeedMax);
+            // Фиксированная скорость без ускорения
+            particle.SpeedX = (float)(Particle.rand.NextDouble() - 0.5) * 0.5f;
+            particle.SpeedY = Particle.rand.Next(SpeedMin, SpeedMax) * 0.3f;
 
-            particle.Radius = Particle.rand.Next(RadiusMin, RadiusMax);
+            // Убираем гравитацию для этого эмиттера
+            this.GravitationY = 0;
 
             if (particle is TargetParticle target)
             {
