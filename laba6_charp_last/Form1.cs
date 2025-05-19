@@ -22,8 +22,11 @@ namespace laba6_charp_last
         private int lives = 5;
         private int rocketsDestroyed = 0;
         private const int WIN_CONDITION = 20;
-        private DateTime lastMeteorTime = DateTime.MinValue;
+        //private DateTime lastMeteorTime = DateTime.MinValue;
         private List<Bitmap> lifeIcons = new List<Bitmap>();
+
+        private int winCondition = 20;
+        private DateTime lastMeteorTime = DateTime.Now.AddSeconds(-30);
 
         // Увеличиваем интервал появления метеоритов
         private const double METEOR_INTERVAL_SECONDS = 15.0;
@@ -35,6 +38,7 @@ namespace laba6_charp_last
         public Form1()
         {
             InitializeComponent();
+            //SetupMenu();
 
             // Инициализация иконок жизней
             InitializeLifeIcons();
@@ -255,17 +259,13 @@ namespace laba6_charp_last
 
         private void CheckBulletCollisions()
         {
-            foreach (var bullet in gun.particles.ToList()) // Используем ToList() для безопасного удаления
+            foreach (var bullet in gun.particles.ToList())
             {
                 if (bullet.Life <= 0) continue;
 
-                bool bulletDestroyed = false;
-
-                // Проверка столкновений с ракетами
                 foreach (var target in topEmitter.particles.OfType<TargetParticle>())
                 {
-                    if (target.Life <= 0 || (target is MeteorParticle && ((MeteorParticle)target).IsDestroyed))
-                        continue;
+                    if (target.Life <= 0) continue;
 
                     if (CheckCollision(bullet, target))
                     {
@@ -275,12 +275,12 @@ namespace laba6_charp_last
                         if (target.HitCount >= target.HitsToDestroy)
                         {
                             target.Life = 0;
-                            if (target is MeteorParticle)
+                            if (target is MeteorParticle meteor)
                             {
-                                ((MeteorParticle)target).IsDestroyed = true;
+                                meteor.IsDestroyed = true;
                                 score += 100;
+                                CreateBigExplosion(meteor.X, meteor.Y, Color.Orange);
                                 ((GunEmitter)gun).ActivateUpgrade();
-                                CreateSmallExplosion(target.X, target.Y, Color.Orange);
                             }
                             else
                             {
@@ -288,18 +288,18 @@ namespace laba6_charp_last
                                 CreateSmallExplosion(target.X, target.Y, Color.LightBlue);
                             }
                         }
-
                         bullet.Life = 0; // Пуля исчезает при попадании
-                        bulletDestroyed = true;
                         break;
                     }
                 }
-
-                if (bulletDestroyed)
-                {
-                    gun.particles.Remove(bullet);
-                }
             }
+        }
+
+        private void CreateBigExplosion(float x, float y, Color color)
+        {
+            explosionEmitter.ParticlesCount = 80;
+            explosionEmitter.CreateExplosion(x, y, color);
+            explosionEmitter.ParticlesCount = 50; // Возвращаем стандартное значение
         }
 
         private void CreateSmallExplosion(float x, float y, Color color)
@@ -494,5 +494,7 @@ namespace laba6_charp_last
         {
             lblScore.Text = "Очки: 0";
         }
+
+
     }
 }

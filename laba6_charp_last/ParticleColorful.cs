@@ -11,6 +11,7 @@ namespace laba6_charp_last
     {
         public Color FromColor;
         public Color ToColor;
+        public float StretchFactor = 1.5f;
 
         public static Color MixColor(Color color1, Color color2, float k)
         {
@@ -28,7 +29,8 @@ namespace laba6_charp_last
             var color = MixColor(ToColor, FromColor, k);
             var b = new SolidBrush(color);
 
-            g.FillEllipse(b, X - Radius, Y - Radius, Radius * 2, Radius * 2);
+            // Вертикальный эллипс (высота в 2 раза больше ширины)
+            g.FillEllipse(b, X - Radius / 2, Y - Radius, Radius, Radius * 2);
             b.Dispose();
         }
     }

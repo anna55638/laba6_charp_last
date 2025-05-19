@@ -25,7 +25,7 @@ public class GunEmitter : Emitter
     {
         try
         {
-            var originalImage = Image.FromFile("Resources/cosmo2.jpg");
+            var originalImage = Image.FromFile("Resources/cosmo11.png");
             GunImage = new Bitmap(originalImage, new Size(70, 60));
             originalImage.Dispose();
         }
@@ -113,21 +113,41 @@ public class GunEmitter : Emitter
         }
     }
 
-    public new void UpdateState()
+    private int fireTickCounter = 0;
+
+    public void UpdateState()
     {
-        UpdateUpgradeState();
         base.UpdateState();
 
-        /*if (IsUpgraded && Particle.rand.Next(10) < 3)
+        fireTickCounter++;
+        if (fireTickCounter >= FireRate)
         {
-            var particle = CreateParticle();
-            particle.X = X;
-            particle.Y = Y - 15;
-            particle.Life = 20 + Particle.rand.Next(30);
-            particle.SpeedX = (Particle.rand.Next(10) - 5) * 0.2f;
-            particle.SpeedY = -Particle.rand.Next(5) * 0.3f;
-            particle.Radius = 2 + Particle.rand.Next(4);
-            particles.Add(particle);
-        }*/
+            fireTickCounter = 0;
+            CreateBullet();
+
+            if (IsUpgraded)
+            {
+                // Диагональные выстрелы при улучшении
+                CreateBullet(Direction + 30); // Левый
+                CreateBullet(Direction - 30); // Правый
+            }
+        }
+    }
+
+    private void CreateBullet(float directionOffset = 0)
+    {
+        var particle = CreateParticle();
+        particle.Life = 100;
+        particle.X = X;
+        particle.Y = Y - 15;
+        particle.Radius = 8; // Нормальный размер
+
+        double angle = (Direction + directionOffset) * Math.PI / 180;
+        float speed = Particle.rand.Next(SpeedMin, SpeedMax);
+
+        particle.SpeedX = (float)(Math.Cos(angle) * speed);
+        particle.SpeedY = -(float)(Math.Sin(angle) * speed);
+
+        particles.Add(particle);
     }
 }

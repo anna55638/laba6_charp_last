@@ -12,7 +12,7 @@ namespace laba6_charp_last
         public int HitCount = 0;
         public int HitsToDestroy = 3;
         public static Image RocketImage; // Загружаем изображение ракеты
-        private static Size rocketSize = new Size(40, 40);
+        private static Size rocketSize = new Size(80, 60);
 
         static TargetParticle()
         {
