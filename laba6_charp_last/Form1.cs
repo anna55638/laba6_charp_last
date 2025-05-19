@@ -25,6 +25,13 @@ namespace laba6_charp_last
         private DateTime lastMeteorTime = DateTime.MinValue;
         private List<Bitmap> lifeIcons = new List<Bitmap>();
 
+        // Увеличиваем интервал появления метеоритов
+        private const double METEOR_INTERVAL_SECONDS = 15.0;
+
+        // Уменьшаем размер взрывов
+        private const int EXPLOSION_PARTICLES_COUNT = 15;
+        private const int EXPLOSION_PARTICLE_LIFE = 30;
+
         public Form1()
         {
             InitializeComponent();
@@ -74,13 +81,17 @@ namespace laba6_charp_last
             };
 
             // Инициализация эмиттера взрывов
-            explosionEmitter = new ExplosionEmitter();
+            // Настройка эмиттера взрывов
+            explosionEmitter = new ExplosionEmitter
+            {
+                ParticlesCount = EXPLOSION_PARTICLES_COUNT
+            };
 
             emitters.Add(gun);
             emitters.Add(topEmitter);
             emitters.Add(explosionEmitter);
 
-            // Настройка TrackBar'ов
+            // Настройка TrackBar
             InitializeTrackBars();
         }
 
@@ -206,7 +217,7 @@ namespace laba6_charp_last
 
         private void SpawnMeteorIfNeeded()
         {
-            if ((DateTime.Now - lastMeteorTime).TotalSeconds >= 15)
+            if ((DateTime.Now - lastMeteorTime).TotalSeconds >= METEOR_INTERVAL_SECONDS)
             {
                 lastMeteorTime = DateTime.Now;
                 CreateMeteor();
@@ -244,13 +255,56 @@ namespace laba6_charp_last
 
         private void CheckBulletCollisions()
         {
-            foreach (var bullet in gun.particles)
+            foreach (var bullet in gun.particles.ToList()) // Используем ToList() для безопасного удаления
             {
                 if (bullet.Life <= 0) continue;
 
-                CheckRocketCollisions(bullet);
-                CheckMeteorCollisions(bullet);
+                bool bulletDestroyed = false;
+
+                // Проверка столкновений с ракетами
+                foreach (var target in topEmitter.particles.OfType<TargetParticle>())
+                {
+                    if (target.Life <= 0 || (target is MeteorParticle && ((MeteorParticle)target).IsDestroyed))
+                        continue;
+
+                    if (CheckCollision(bullet, target))
+                    {
+                        target.HitCount++;
+                        score += target is MeteorParticle ? 20 : 10;
+
+                        if (target.HitCount >= target.HitsToDestroy)
+                        {
+                            target.Life = 0;
+                            if (target is MeteorParticle)
+                            {
+                                ((MeteorParticle)target).IsDestroyed = true;
+                                score += 100;
+                                ((GunEmitter)gun).ActivateUpgrade();
+                                CreateSmallExplosion(target.X, target.Y, Color.Orange);
+                            }
+                            else
+                            {
+                                rocketsDestroyed++;
+                                CreateSmallExplosion(target.X, target.Y, Color.LightBlue);
+                            }
+                        }
+
+                        bullet.Life = 0; // Пуля исчезает при попадании
+                        bulletDestroyed = true;
+                        break;
+                    }
+                }
+
+                if (bulletDestroyed)
+                {
+                    gun.particles.Remove(bullet);
+                }
             }
+        }
+
+        private void CreateSmallExplosion(float x, float y, Color color)
+        {
+            explosionEmitter.CreateExplosion(x, y, color);
         }
 
         private void CheckRocketCollisions(Particle bullet)

@@ -47,7 +47,7 @@
             // 
             // picDisplay
             // 
-            this.picDisplay.Location = new System.Drawing.Point(2, 1);
+            this.picDisplay.Location = new System.Drawing.Point(12, 12);
             this.picDisplay.Name = "picDisplay";
             this.picDisplay.Size = new System.Drawing.Size(838, 600);
             this.picDisplay.TabIndex = 0;
@@ -101,7 +101,7 @@
             // labelHits
             // 
             this.labelHits.AutoSize = true;
-            this.labelHits.Location = new System.Drawing.Point(408, 527);
+            this.labelHits.Location = new System.Drawing.Point(395, 600);
             this.labelHits.Name = "labelHits";
             this.labelHits.Size = new System.Drawing.Size(0, 16);
             this.labelHits.TabIndex = 6;
@@ -109,7 +109,7 @@
             // labelSpeed
             // 
             this.labelSpeed.AutoSize = true;
-            this.labelSpeed.Location = new System.Drawing.Point(35, 526);
+            this.labelSpeed.Location = new System.Drawing.Point(28, 600);
             this.labelSpeed.Name = "labelSpeed";
             this.labelSpeed.Size = new System.Drawing.Size(0, 16);
             this.labelSpeed.TabIndex = 7;
@@ -117,7 +117,7 @@
             // labelFireRate
             // 
             this.labelFireRate.AutoSize = true;
-            this.labelFireRate.Location = new System.Drawing.Point(230, 526);
+            this.labelFireRate.Location = new System.Drawing.Point(206, 600);
             this.labelFireRate.Name = "labelFireRate";
             this.labelFireRate.Size = new System.Drawing.Size(0, 16);
             this.labelFireRate.TabIndex = 8;

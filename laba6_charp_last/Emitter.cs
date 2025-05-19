@@ -59,7 +59,10 @@ namespace laba6_charp_last
                 {
                     particle.X += particle.SpeedX;
                     particle.Y += particle.SpeedY;
-                    particle.Life -= 1;
+                    if (!(particle is TargetParticle))
+                    {
+                        particle.Life -= 1;
+                    }
 
                     particle.SpeedX += GravitationX;
                     particle.SpeedY += GravitationY;

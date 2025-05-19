@@ -100,7 +100,7 @@ public class GunEmitter : Emitter
             originalFireRate = FireRate;
         }
         IsUpgraded = true;
-        FireRate = originalFireRate * 3;
+        FireRate = originalFireRate; // Убираем умножение, чтобы не увеличивать скорострельность
         upgradeEndTime = DateTime.Now.AddSeconds(7);
     }
 
@@ -118,7 +118,7 @@ public class GunEmitter : Emitter
         UpdateUpgradeState();
         base.UpdateState();
 
-        if (IsUpgraded && Particle.rand.Next(10) < 3)
+        /*if (IsUpgraded && Particle.rand.Next(10) < 3)
         {
             var particle = CreateParticle();
             particle.X = X;
@@ -128,6 +128,6 @@ public class GunEmitter : Emitter
             particle.SpeedY = -Particle.rand.Next(5) * 0.3f;
             particle.Radius = 2 + Particle.rand.Next(4);
             particles.Add(particle);
-        }
+        }*/
     }
 }

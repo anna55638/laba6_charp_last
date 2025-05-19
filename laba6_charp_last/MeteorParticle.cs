@@ -10,14 +10,14 @@ namespace laba6_charp_last
     public class MeteorParticle : TargetParticle
     {
         public static Image MeteorImage;
-        private static Size meteorSize = new Size(50, 50);
+        private static Size meteorSize = new Size(40, 40); // Уменьшенный размер
         public bool IsDestroyed = false;
 
         static MeteorParticle()
         {
             try
             {
-                var originalImage = Image.FromFile("Resources/meteor.png");
+                var originalImage = Image.FromFile("Resources/meteor.jpg"); // Убедитесь в правильном имени файла
                 MeteorImage = new Bitmap(originalImage, meteorSize);
                 originalImage.Dispose();
             }
