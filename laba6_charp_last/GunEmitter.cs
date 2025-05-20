@@ -7,25 +7,28 @@ public class GunEmitter : Emitter
 {
     private int fireTickCounter = 0;
     private bool forceResetCounter = false;
-    private DateTime lastShotTime = DateTime.MinValue;
 
     public float X;
     public float Y;
     public float Direction = 0;
     public int Spreading = 10;
     public int SpeedMin = 5;
-    public int SpeedMax = 10;
+    public int SpeedMax = 5;
     public int RadiusMin = 2;
     public int RadiusMax = 5;
     public Color ColorFrom = Color.Yellow;
     public Color ToColor = Color.FromArgb(0, Color.Orange);
     public static Image GunImage;
-    public int FireRate = 20;
+    public int FireRate = 2;
     private bool _isUpgraded = false;
     private DateTime upgradeEndTime;
     private int originalFireRate;
 
-    private const float GunBarrelOffset = 25f;
+    private int originalSpeedMin;
+    private int originalSpeedMax;
+
+    private const int GunLength = 34; 
+    private const int GunWidth = 35;
 
     static GunEmitter()
     {
@@ -63,16 +66,32 @@ public class GunEmitter : Emitter
         };
     }
 
-    public override void ResetParticle(Particle particle)
+    public void ResetParticle(Particle particle, float? customDirection = null)
     {
         particle.Life = 300;
-        particle.X = X;
-        // Поднимаем точку вылета выше (Y - GunBarrelOffset)
-        particle.Y = Y - GunBarrelOffset;
+
+        float direction = customDirection ?? Direction;
+        double angle = direction * Math.PI / 180;
+        float offsetX = (float)(GunLength * Math.Cos(angle));
+        float offsetY = -(float)(GunLength * Math.Sin(angle));
+
+        particle.X = X + offsetX;
+        particle.Y = Y + offsetY;
         particle.Radius = 6;
 
-        float speed = Particle.rand.Next(8, 12);
-        double angle = Direction * Math.PI / 180;
+        // Выбираем скорость в зависимости от улучшения
+        float speed;
+        if (_isUpgraded)
+        {
+            speed = customDirection.HasValue
+                ? Particle.rand.Next(SpeedMin + 2, SpeedMax + 5) // Для боковых пуль
+                : Particle.rand.Next(SpeedMin + 5, SpeedMax + 10); // Для центральной пули
+        }
+        else
+        {
+            speed = Particle.rand.Next(SpeedMin, SpeedMax);
+        }
+
         particle.SpeedX = (float)(Math.Cos(angle) * speed);
         particle.SpeedY = -(float)(Math.Sin(angle) * speed);
     }
@@ -82,32 +101,32 @@ public class GunEmitter : Emitter
     {
         base.UpdateState();
 
-        // Обновление состояния улучшения
-        if (IsUpgraded && DateTime.Now > upgradeEndTime)
-        {
-            IsUpgraded = false;
-            FireRate = originalFireRate;
-        }
+        // Обновляем состояние улучшения
+        UpdateUpgradeState();
 
-        // Логика стрельбы на основе FireRate
         fireTickCounter++;
         if (fireTickCounter >= FireRate)
         {
             fireTickCounter = 0;
-            Shoot();
-        }
-    }
 
-    private void Shoot()
-    {
-        // Основной выстрел
-        CreateBullet(Direction);
+            // Всегда создаем центральную пулю
+            var centralParticle = CreateParticle() as ParticleColorful;
+            ResetParticle(centralParticle);
+            particles.Add(centralParticle);
 
-        // Дополнительные выстрелы при улучшении
-        if (IsUpgraded)
-        {
-            CreateBullet(Direction + 25);
-            CreateBullet(Direction - 25);
+            if (IsUpgraded)
+            {
+                // Создаем дополнительные пули под углом
+                var leftParticle = CreateParticle() as ParticleColorful;
+                ResetParticle(leftParticle, Direction + 25);
+                leftParticle.FromColor = Color.Cyan;
+                particles.Add(leftParticle);
+
+                var rightParticle = CreateParticle() as ParticleColorful;
+                ResetParticle(rightParticle, Direction - 25);
+                rightParticle.FromColor = Color.Cyan;
+                particles.Add(rightParticle);
+            }
         }
     }
 
@@ -116,11 +135,14 @@ public class GunEmitter : Emitter
         GraphicsState state = g.Save();
         try
         {
+            // Корректируем позицию для правильного вращения
             g.TranslateTransform(X, Y);
             g.RotateTransform(-Direction + 90);
+
+            // Рисуем изображение с учетом центра вращения
             g.DrawImage(
                 GunImage,
-                -GunImage.Width / 2,
+                -GunWidth,  // Смещаем изображение так, чтобы центр вращения был у основания
                 -GunImage.Height / 2,
                 GunImage.Width,
                 GunImage.Height
@@ -132,12 +154,13 @@ public class GunEmitter : Emitter
         }
     }
 
-    public void UpdateUpgradeState()
+    private void UpdateUpgradeState()
     {
-        if (IsUpgraded && DateTime.Now > upgradeEndTime)
+        if (_isUpgraded && DateTime.Now > upgradeEndTime)
         {
-            IsUpgraded = false;
-            FireRate = originalFireRate;
+            _isUpgraded = false;
+            SpeedMin = originalSpeedMin;
+            SpeedMax = originalSpeedMax;
         }
     }
 
@@ -145,32 +168,46 @@ public class GunEmitter : Emitter
     private void CreateBullet(float direction)
     {
         var particle = CreateParticle() as ParticleColorful;
-        particle.Life = 300;
-        particle.X = X;
-        particle.Y = Y - 15;
-        particle.Radius = 6;
 
-        float speed = Particle.rand.Next(8, 12);
+        // Устанавливаем позицию пули с учетом направления
         double angle = direction * Math.PI / 180;
-        particle.SpeedX = (float)(Math.Cos(angle) * speed);
-        particle.SpeedY = -(float)(Math.Sin(angle) * speed);
+        float offsetX = (float)(GunLength * Math.Cos(angle));
+        float offsetY = -(float)(GunLength * Math.Sin(angle));
 
-        if (direction != Direction && IsUpgraded)
+        particle.X = X + offsetX;
+        particle.Y = Y + offsetY;
+        particle.Radius = 6;
+        particle.Life = 300;
+
+        // Выбираем скорость в зависимости от типа пули
+        float speed;
+        if (_isUpgraded && direction != Direction) // Для боковых пуль
         {
+            speed = Particle.rand.Next(SpeedMin + 2, SpeedMax + 5); // Можно задать другую скорость
             particle.FromColor = Color.Cyan;
         }
+        else // Для центральной пули
+        {
+            speed = _isUpgraded
+                ? Particle.rand.Next(SpeedMin + 5, SpeedMax + 10)
+                : Particle.rand.Next(SpeedMin, SpeedMax);
+        }
+
+        // Правильно рассчитываем направление скорости
+        particle.SpeedX = (float)(Math.Cos(angle) * speed);
+        particle.SpeedY = -(float)(Math.Sin(angle) * speed);
 
         particles.Add(particle);
     }
 
     public void ActivateUpgrade()
     {
-        if (!IsUpgraded)
+        if (!_isUpgraded)
         {
-            originalFireRate = FireRate;
-            FireRate = (int)(originalFireRate * 0.7f); // Уменьшаем интервал на 30%
+            originalSpeedMin = SpeedMin;
+            originalSpeedMax = SpeedMax;
+            _isUpgraded = true;
+            upgradeEndTime = DateTime.Now.AddSeconds(10);
         }
-        IsUpgraded = true;
-        upgradeEndTime = DateTime.Now.AddSeconds(10);
     }
 }

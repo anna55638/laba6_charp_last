@@ -99,7 +99,7 @@ namespace laba6_charp_last
                 SpeedMin = 15,
                 SpeedMax = 20,
                 ColorFrom = Color.Yellow,
-                FireRate = 20,
+                //FireRate = 3,
                 ParticlesCount = 200,
                 X = picDisplay.Width / 2,
                 Y = picDisplay.Height - 30,
@@ -193,7 +193,8 @@ namespace laba6_charp_last
         {
             /*gun.FireRate = 6 - trackBarFireRate.Value;
             labelFireRate.Text = $"Скорострельность: {trackBarFireRate.Value}";
-        */}
+        */
+        }
 
         private void TrackBarSpeed_ValueChanged(object sender, EventArgs e)
         {
