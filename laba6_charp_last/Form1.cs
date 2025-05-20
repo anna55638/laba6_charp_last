@@ -21,82 +21,19 @@ namespace laba6_charp_last
         private int score = 0;
         private int lives = 5;
         private int rocketsDestroyed = 0;
-        private const int WIN_CONDITION = 20;
-        //private DateTime lastMeteorTime = DateTime.MinValue;
-        private List<Bitmap> lifeIcons = new List<Bitmap>();
-
         private int winCondition = 20;
         private DateTime lastMeteorTime = DateTime.Now.AddSeconds(-30);
-
-        // Увеличиваем интервал появления метеоритов
-        private const double METEOR_INTERVAL_SECONDS = 15.0;
-
-        // Уменьшаем размер взрывов
-        private const int EXPLOSION_PARTICLES_COUNT = 15;
-        private const int EXPLOSION_PARTICLE_LIFE = 30;
+        private const double METEOR_INTERVAL_SECONDS = 30.0;
+        private List<Bitmap> lifeIcons = new List<Bitmap>();
+        private bool gameStarted = false;
 
         public Form1()
         {
             InitializeComponent();
-            //SetupMenu();
-
-            // Инициализация иконок жизней
             InitializeLifeIcons();
-
-            // Загрузка фона
             InitializeBackground();
-
-            // Настройка PictureBox
-            picDisplay.Image = new Bitmap(picDisplay.Width, picDisplay.Height);
-            picDisplay.MouseMove += picDisplay_MouseMove;
-
-            // Инициализация пушки
-            gun = new GunEmitter
-            {
-                Direction = 90,
-                Spreading = 5,
-                SpeedMin = 15,
-                SpeedMax = 20,
-                ColorFrom = Color.Yellow,
-                //ColorTo = Color.FromArgb(0, Color.Orange),
-                FireRate = 3,
-                ParticlesCount = 200,
-                X = picDisplay.Width / 2,
-                Y = picDisplay.Height - 30,
-            };
-
-            // Инициализация эмиттера ракет
-            topEmitter = new TopEmitter
-            {
-                Width = picDisplay.Width,
-                ParticlesPerTick = 1,
-                ParticlesCount = 5,
-                ColorFrom = Color.LightBlue,
-                ColorTo = Color.FromArgb(0, Color.Blue),
-                SpeedMin = 1,
-                SpeedMax = 2,
-                RadiusMin = 15,
-                RadiusMax = 25,
-                LifeMin = 300,
-                LifeMax = 500,
-                HitsToDestroyMin = 2,
-                HitsToDestroyMax = 5,
-                GravitationY = 0
-            };
-
-            // Инициализация эмиттера взрывов
-            // Настройка эмиттера взрывов
-            explosionEmitter = new ExplosionEmitter
-            {
-                ParticlesCount = EXPLOSION_PARTICLES_COUNT
-            };
-
-            emitters.Add(gun);
-            emitters.Add(topEmitter);
-            emitters.Add(explosionEmitter);
-
-            // Настройка TrackBar
-            InitializeTrackBars();
+            InitializeGameElements();
+            SetupGameModeSelection();
         }
 
         private void InitializeLifeIcons()
@@ -137,7 +74,6 @@ namespace laba6_charp_last
                         g.FillRectangle(brush, 0, 0, picDisplay.Width, picDisplay.Height);
                     }
 
-                    // Рисуем звезды
                     var rnd = new Random();
                     for (int i = 0; i < 200; i++)
                     {
@@ -149,6 +85,90 @@ namespace laba6_charp_last
                     }
                 }
             }
+        }
+
+        private void InitializeGameElements()
+        {
+            picDisplay.Image = new Bitmap(picDisplay.Width, picDisplay.Height);
+            picDisplay.MouseMove += picDisplay_MouseMove;
+
+            gun = new GunEmitter
+            {
+                Direction = 90,
+                Spreading = 5,
+                SpeedMin = 15,
+                SpeedMax = 20,
+                ColorFrom = Color.Yellow,
+                FireRate = 20,
+                ParticlesCount = 200,
+                X = picDisplay.Width / 2,
+                Y = picDisplay.Height - 30,
+            };
+
+            topEmitter = new TopEmitter
+            {
+                Width = picDisplay.Width,
+                ParticlesPerTick = 1,
+                ParticlesCount = 5,
+                ColorFrom = Color.LightBlue,
+                ColorTo = Color.FromArgb(0, Color.Blue),
+                SpeedMin = 1,
+                SpeedMax = 2,
+                RadiusMin = 15,
+                RadiusMax = 25,
+                LifeMin = 300,
+                LifeMax = 500,
+                HitsToDestroyMin = 2,
+                HitsToDestroyMax = 5,
+                GravitationY = 0
+            };
+
+            explosionEmitter = new ExplosionEmitter
+            {
+                ParticlesCount = 15
+            };
+
+            emitters.Add(gun);
+            emitters.Add(topEmitter);
+            emitters.Add(explosionEmitter);
+
+            InitializeTrackBars();
+        }
+
+        private void SetupGameModeSelection()
+        {
+            btnEasy.Tag = 20;
+            btnMedium.Tag = 30;
+            btnHard.Tag = 40;
+
+            btnEasy.Click += GameMode_Click;
+            btnMedium.Click += GameMode_Click;
+            btnHard.Click += GameMode_Click;
+
+            btnStart.Click += btnStart_Click;
+            btnRestart.Click += btnRestart_Click;
+
+            btnStart.Enabled = false;
+        }
+
+        private void GameMode_Click(object sender, EventArgs e)
+        {
+            Button clickedButton = (Button)sender;
+            winCondition = (int)clickedButton.Tag;
+            btnStart.Enabled = true;
+
+            // Сброс цвета всех кнопок
+            btnEasy.BackColor = SystemColors.Control;
+            btnMedium.BackColor = SystemColors.Control;
+            btnHard.BackColor = SystemColors.Control;
+
+            // Установка цвета выбранной кнопки
+            clickedButton.BackColor = Color.LightGreen;
+        }
+
+        private void btnRestart_Click(object sender, EventArgs e)
+        {
+            StartNewGame();
         }
 
         private void InitializeTrackBars()
@@ -163,17 +183,17 @@ namespace laba6_charp_last
             trackBarHits.Value = 3;
             trackBarHits.ValueChanged += TrackBarHits_ValueChanged;
 
-            trackBarFireRate.Minimum = 1;
+            /*trackBarFireRate.Minimum = 1;
             trackBarFireRate.Maximum = 10;
             trackBarFireRate.Value = 3;
-            trackBarFireRate.ValueChanged += TrackBarFireRate_ValueChanged;
+            trackBarFireRate.ValueChanged += TrackBarFireRate_ValueChanged;*/
         }
 
         private void TrackBarFireRate_ValueChanged(object sender, EventArgs e)
         {
-            gun.FireRate = trackBarFireRate.Value;
+            /*gun.FireRate = 6 - trackBarFireRate.Value;
             labelFireRate.Text = $"Скорострельность: {trackBarFireRate.Value}";
-        }
+        */}
 
         private void TrackBarSpeed_ValueChanged(object sender, EventArgs e)
         {
@@ -191,6 +211,7 @@ namespace laba6_charp_last
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            if (!gameStarted) return;
             if (CheckGameOver()) return;
 
             SpawnMeteorIfNeeded();
@@ -202,14 +223,16 @@ namespace laba6_charp_last
         {
             if (lives <= 0)
             {
+                gameStarted = false;
                 timer1.Enabled = false;
                 MessageBox.Show("Игра окончена! Вы проиграли.", "Результат");
                 btnStart.Enabled = true;
                 return true;
             }
 
-            if (rocketsDestroyed >= WIN_CONDITION)
+            if (rocketsDestroyed >= winCondition)
             {
+                gameStarted = false;
                 timer1.Enabled = false;
                 MessageBox.Show($"Поздравляем! Вы выиграли с счетом {score}!", "Результат");
                 btnStart.Enabled = true;
@@ -236,8 +259,8 @@ namespace laba6_charp_last
                 ToColor = Color.FromArgb(0, Color.DarkGray),
                 X = Particle.rand.Next(picDisplay.Width),
                 Y = -50,
-                SpeedX = (float)(Particle.rand.NextDouble() - 0.5) * 2f,
-                SpeedY = Particle.rand.Next(1, 3) * 0.5f,
+                SpeedX = (float)(Particle.rand.NextDouble() - 0.5) * 1f,
+                SpeedY = Particle.rand.Next(1, 3) * 0.3f,
                 Life = 1000,
                 HitsToDestroy = 5 + Particle.rand.Next(6),
                 HitCount = 0
@@ -248,7 +271,6 @@ namespace laba6_charp_last
 
         private void UpdateGameState()
         {
-            // Измененный вызов для GunEmitter
             ((GunEmitter)gun).UpdateState();
             topEmitter.UpdateState();
 
@@ -288,7 +310,7 @@ namespace laba6_charp_last
                                 CreateSmallExplosion(target.X, target.Y, Color.LightBlue);
                             }
                         }
-                        bullet.Life = 0; // Пуля исчезает при попадании
+                        bullet.Life = 0;
                         break;
                     }
                 }
@@ -297,67 +319,15 @@ namespace laba6_charp_last
 
         private void CreateBigExplosion(float x, float y, Color color)
         {
-            explosionEmitter.ParticlesCount = 80;
+            explosionEmitter.ParticlesCount = 60;
             explosionEmitter.CreateExplosion(x, y, color);
-            explosionEmitter.ParticlesCount = 50; // Возвращаем стандартное значение
+            explosionEmitter.ParticlesCount = 30;
         }
 
         private void CreateSmallExplosion(float x, float y, Color color)
         {
             explosionEmitter.CreateExplosion(x, y, color);
         }
-
-        private void CheckRocketCollisions(Particle bullet)
-        {
-            foreach (var target in topEmitter.particles.OfType<TargetParticle>())
-            {
-                if (target.Life <= 0 || target is MeteorParticle) continue;
-
-                if (CheckCollision(bullet, target))
-                {
-                    target.HitCount++;
-                    score += 10;
-
-                    if (target.HitCount >= target.HitsToDestroy)
-                    {
-                        target.Life = 0;
-                        rocketsDestroyed++;
-                        explosionEmitter.CreateExplosion(target.X, target.Y, Color.LightBlue);
-                        score += 50;
-                    }
-
-                    bullet.Life -= 20;
-                    if (bullet.Life <= 0) break;
-                }
-            }
-        }
-
-        private void CheckMeteorCollisions(Particle bullet)
-        {
-            foreach (var target in topEmitter.particles.OfType<MeteorParticle>())
-            {
-                if (target.Life <= 0 || target.IsDestroyed) continue;
-
-                if (CheckCollision(bullet, target))
-                {
-                    target.HitCount++;
-                    score += 20;
-
-                    if (target.HitCount >= target.HitsToDestroy)
-                    {
-                        target.Life = 0;
-                        target.IsDestroyed = true;
-                        score += 100;
-                        ((GunEmitter)gun).ActivateUpgrade();
-                        explosionEmitter.CreateExplosion(target.X, target.Y, Color.Orange);
-                    }
-
-                    bullet.Life -= 20;
-                    if (bullet.Life <= 0) break;
-                }
-            }
-        }
-
 
         private bool CheckCollision(Particle a, Particle b)
         {
@@ -447,7 +417,7 @@ namespace laba6_charp_last
 
         private void DrawRocketCounter(Graphics g)
         {
-            g.DrawString($"Ракет: {rocketsDestroyed}/{WIN_CONDITION}",
+            g.DrawString($"Ракет: {rocketsDestroyed}/{winCondition}",
                 new Font("Arial", 12), Brushes.White, 10, 10);
         }
 
@@ -476,12 +446,13 @@ namespace laba6_charp_last
 
         private void StartNewGame()
         {
+            gameStarted = true;
             timer1.Enabled = true;
             btnStart.Enabled = false;
             score = 0;
             lives = 5;
             rocketsDestroyed = 0;
-            lastMeteorTime = DateTime.Now;
+            lastMeteorTime = DateTime.Now.AddSeconds(-25); // Первый метеорит появится через 5 секунд
             lblScore.Text = "Очки: 0";
 
             gun.particles.Clear();
@@ -495,6 +466,14 @@ namespace laba6_charp_last
             lblScore.Text = "Очки: 0";
         }
 
+        private void picDisplay_Click(object sender, EventArgs e)
+        {
+            // Обработка клика по игровому полю
+        }
 
+        private void Form1_Load_1(object sender, EventArgs e)
+        {
+            //lblScore.Text = "Очки: 0";
+        }
     }
 }

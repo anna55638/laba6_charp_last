@@ -9,7 +9,7 @@ namespace laba6_charp_last
 {
     public class ExplosionEmitter : Emitter
     {
-        public int ParticlesCount = 40; // Больше частиц
+        public int ParticlesCount = 30; // Reduced particle count
         public Color ExplosionColor = Color.Orange;
         public float X;
         public float Y;
@@ -20,21 +20,22 @@ namespace laba6_charp_last
             {
                 FromColor = ExplosionColor,
                 ToColor = Color.FromArgb(0, Color.Red),
-                Radius = 3 + Particle.rand.Next(8) // Больший размер
+                Radius = 2 + Particle.rand.Next(5) // Smaller particles
             };
         }
 
         public override void ResetParticle(Particle particle)
         {
-            particle.Life = 5 + Particle.rand.Next(10); // Короткая жизнь // Уменьшенное время жизни
+            particle.Life = 10 + Particle.rand.Next(20); // Longer life
             particle.X = X;
             particle.Y = Y;
 
             var direction = Particle.rand.Next(360);
-            var speed = 1 + Particle.rand.Next(5); // Уменьшенная скорость
+            var speed = 0.5f + Particle.rand.Next(3); // Slower speed
 
-            particle.SpeedX = (float)(Math.Cos(direction / 180f * Math.PI) * speed) * 0.2f;
-            particle.SpeedY = -(float)(Math.Sin(direction / 180f * Math.PI) * speed) * 0.2f;
+            // More controlled diagonal movement
+            particle.SpeedX = (float)(Math.Cos(direction / 180f * Math.PI) * speed) * 0.3f;
+            particle.SpeedY = -(float)(Math.Sin(direction / 180f * Math.PI) * speed) * 0.3f;
         }
 
         public void CreateExplosion(float x, float y, Color color)

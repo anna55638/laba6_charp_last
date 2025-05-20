@@ -28,17 +28,17 @@ namespace laba6_charp_last
 
         public virtual void ResetParticle(Particle particle)
         {
-            particle.Life = 20 + Particle.rand.Next(100);
+            particle.Life = 50 + Particle.rand.Next(100); // Increased base life
             particle.X = MousePositionX;
             particle.Y = MousePositionY;
 
             var direction = (double)Particle.rand.Next(360);
-            var speed = 1 + Particle.rand.Next(10);
+            var speed = 0.5f + Particle.rand.Next(5); // Reduced speed
 
-            particle.SpeedX = (float)(Math.Cos(direction / 180 * Math.PI) * speed);
-            particle.SpeedY = -(float)(Math.Sin(direction / 180 * Math.PI) * speed);
+            particle.SpeedX = (float)(Math.Cos(direction / 180 * Math.PI) * speed) * 0.5f; // Slower movement
+            particle.SpeedY = -(float)(Math.Sin(direction / 180 * Math.PI) * speed) * 0.5f; // Slower movement
 
-            particle.Radius = 2 + Particle.rand.Next(10);
+            particle.Radius = 2 + Particle.rand.Next(5); // Smaller radius range
         }
 
         public void UpdateState()
